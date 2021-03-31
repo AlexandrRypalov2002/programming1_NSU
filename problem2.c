@@ -5,7 +5,32 @@
 #define N 64
 #define L 1024
 
-void skobka_1(char* first, char* second, int a) {
+void check_for_d_or_D_orOther(char* str, char* word, int *w, int *j, int *g, int *r) {
+	while (*j != *r) {
+		if ((str[*j] == '\\') && (str[*j + 1] == 'd') && (isdigit(word[*w]))) {
+			(*w) += 1;
+			(*j) += 2;
+		}
+		else if ((str[*j] == '\\') && (str[*j + 1] == 'D') && (isalpha(word[*w]))) {
+			*w += 1;
+			*j += 2;
+		}
+		else if ((str[*j] == '~') && (word[*w] != str[*j + 1])) {
+			*w += 1;
+			*j += 2;
+		}
+		else if ((str[*j] == word[*w])) {
+			*w += 1;
+			*j += 1;
+		}
+		else {
+			*g += 1;
+			break;
+		}
+	}
+}
+
+void square_bracket(char* first, char* second, int a) {
 	int b = 0;
 	int c = a;
 	if (first[c] == '[') {
@@ -30,34 +55,31 @@ void skobka_1(char* first, char* second, int a) {
 }
 
 int main() {
-	char str[N]; //шаблон
-	char word[L]; //слово, которое нужно проверить
-	char trash[L] = { '\0' }; //тут лежит все, что находится внутри () в квадратных скобках
-	char str_n[L] = { '\0' }; //новый шаблон, где нет квадратных скобочек
+	char str[N]; //pattern
+	char word[L]; //word to check
+	char trash[L] = { '\0' }; //everything inside () inside square brackets
+	char str_n[L] = { '\0' }; //new pattern without square brackets
 	int numbers[400] = { 0 };
 	int n;
 	int h = 0;
 	int k = 0;
 	int m;
 	scanf("%s", str);
-	for (int i = 0; i < N; i++) { //вся эта конструкция размножает шаблон
+	for (int i = 0; i < N; i++) { //creates new pattern
 		if (str[i] != '[') {
 			str_n[k] = str[i];
 			k++;
 		}
 		else {
 			int q = i;
-			skobka_1(str, trash, q);
+			square_bracket(str, trash, q);
 			int l = strlen(trash);
 			while (str[i] != ']') {
 				i++;
 			}
 			int j = 0;
-			while (j < l) {
-				str_n[k] = trash[j];
-				k++;
-				j++;
-			}
+			strcat(str_n, trash);
+			k += l;
 		}
 	}
 	int r = strlen(str_n);
@@ -65,36 +87,19 @@ int main() {
 	int l = 0;
 	scanf("%d", &n);
 	for (int i = 0; i < n; i++) {
-		scanf("%s", word);
+		scanf("%s ", word);
 		m = strlen(word);
 		int w = 0;
 		int j = 0;
-		while (j != r) {
-			if (((str_n[j] == '\\') && (str_n[j + 1] == 'D') && (isalpha(word[w]) != NULL)) || ((str_n[j] == '\\') && (str_n[j + 1] == 'd') && (isdigit(word[w]) != NULL))) {
-				w++;
-				j += 2;
-			}
-			else if ((str_n[j] == '~') && (word[w] != str_n[j + 1])) {
-				w++;
-				j += 2;
-			}
-			else if (str_n[j] == word[w]) {
-				w++;
-				j++;
-			}
-			else {
-				g++;
-				break;
-			}
-		}
-		if (w == m) {
-			numbers[l] = i;
-			l++;
+		check_for_d_or_D_orOther(str_n, word, &w, &j, &g, &r);
+		if (w == m){
+			printf("%d ", i);
 		}
 	}
 	if (g == n) {
 		printf("none");
 	}
+	/*
 	else if (g != n) {
 		int d = 0;
 		n -= g;
@@ -103,5 +108,6 @@ int main() {
 			d++;
 		}
 	}
+	*/
 	return 0;
 }
