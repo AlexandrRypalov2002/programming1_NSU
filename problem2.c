@@ -5,8 +5,11 @@
 #define N 64
 #define L 1024
 
-void check_for_d_or_D_orOther(char* str, char* word, int *w, int *j, int *g, int *r) {
+int check_for_d_or_D_or_Other(char* str, char* word, int *w, int *j, int *r, int *m) {
 	while (*j != *r) {
+		if ((*m)*2 < *r) {
+			return 0;
+		}
 		if ((str[*j] == '\\') && (str[*j + 1] == 'd') && (isdigit(word[*w]))) {
 			(*w) += 1;
 			(*j) += 2;
@@ -24,9 +27,11 @@ void check_for_d_or_D_orOther(char* str, char* word, int *w, int *j, int *g, int
 			*j += 1;
 		}
 		else {
-			*g += 1;
-			break;
+			return 0;
 		}
+	}
+	if (*w == *m) {
+		return 1;
 	}
 }
 
@@ -59,7 +64,6 @@ int main() {
 	char word[L]; //word to check
 	char trash[L] = { '\0' }; //everything inside () inside square brackets
 	char str_n[L] = { '\0' }; //new pattern without square brackets
-	int numbers[400] = { 0 };
 	int n;
 	int h = 0;
 	int k = 0;
@@ -83,7 +87,6 @@ int main() {
 		}
 	}
 	int r = strlen(str_n);
-	int g = 0;
 	int l = 0;
 	scanf("%d", &n);
 	for (int i = 0; i < n; i++) {
@@ -91,23 +94,16 @@ int main() {
 		m = strlen(word);
 		int w = 0;
 		int j = 0;
-		check_for_d_or_D_orOther(str_n, word, &w, &j, &g, &r);
-		if (w == m){
+		int g = check_for_d_or_D_or_Other(str_n, word, &w, &j, &r, &m);
+		if (g == 1){
 			printf("%d ", i);
 		}
-	}
-	if (g == n) {
-		printf("none");
-	}
-	/*
-	else if (g != n) {
-		int d = 0;
-		n -= g;
-		while (d < n) {
-			printf("%d ", numbers[d]);
-			d++;
+		else {
+			l += 1;
 		}
 	}
-	*/
+	if (l == n) {
+		printf("none");
+	}
 	return 0;
 }
