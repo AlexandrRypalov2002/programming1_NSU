@@ -5,32 +5,32 @@
 #define N 64
 #define L 1024
 
-int check_for_d_or_D_or_Other(char* str, char* word, int *w, int *j, int *len_of_str_new, int *m) {
-	while (*j != *len_of_str_new) {
-		if ((*m)*2 < *len_of_str_new) {
+int check_for_d_or_D_or_other(char* str, char* word, int w, int j, int len_of_str_new, int len_of_word) {
+	while (j != len_of_str_new) {
+		if ((len_of_word)*2 < len_of_str_new) {
 			return 0;
 		}
-		if ((str[*j] == '\\') && (str[*j + 1] == 'd') && (isdigit(word[*w]))) {
-			(*w) += 1;
-			(*j) += 2;
+		if ((str[j] == '\\') && (str[j + 1] == 'd') && (isdigit(word[w]))) {
+			w += 1;
+			j += 2;
 		}
-		else if ((str[*j] == '\\') && (str[*j + 1] == 'D') && (isalpha(word[*w]))) {
-			*w += 1;
-			*j += 2;
+		else if ((str[j] == '\\') && (str[j + 1] == 'D') && (isalpha(word[w]))) {
+			w += 1;
+			j += 2;
 		}
-		else if ((str[*j] == '~') && (word[*w] != str[*j + 1])) {
-			*w += 1;
-			*j += 2;
+		else if ((str[j] == '~') && (word[w] != str[j + 1])) {
+			w += 1;
+			j += 2;
 		}
-		else if ((str[*j] == word[*w])) {
-			*w += 1;
-			*j += 1;
+		else if ((str[j] == word[w])) {
+			w += 1;
+			j += 1;
 		}
 		else {
 			return 0;
 		}
 	}
-	if (*w == *m) {
+	if (w == len_of_word) {
 		return 1;
 	}
 }
@@ -67,7 +67,7 @@ int main() {
 	int n;
 	int h = 0;
 	int k = 0;
-	int m;
+	int len_of_word;
 	scanf("%s", str);
 	for (int i = 0; i < N; i++) { //creates new pattern
 		if (str[i] != '[') {
@@ -91,10 +91,10 @@ int main() {
 	scanf("%d", &n);
 	for (int i = 0; i < n; i++) {
 		scanf("%s ", word);
-		m = strlen(word);
+		len_of_word = strlen(word);
 		int w = 0;
 		int j = 0;
-		int g = check_for_d_or_D_or_Other(str_n, word, &w, &j, &len_of_str_new, &m);
+		int g = check_for_d_or_D_or_other(str_n, word, w, j, len_of_str_new, len_of_word);
 		if (g == 1){
 			printf("%d ", i);
 		}
