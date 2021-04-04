@@ -5,9 +5,9 @@
 #define N 64
 #define L 1024
 
-int check_for_d_or_D_or_Other(char* str, char* word, int *w, int *j, int *r, int *m) {
-	while (*j != *r) {
-		if ((*m)*2 < *r) {
+int check_for_d_or_D_or_Other(char* str, char* word, int *w, int *j, int *len_of_str_new, int *m) {
+	while (*j != *len_of_str_new) {
+		if ((*m)*2 < *len_of_str_new) {
 			return 0;
 		}
 		if ((str[*j] == '\\') && (str[*j + 1] == 'd') && (isdigit(word[*w]))) {
@@ -86,7 +86,7 @@ int main() {
 			k += l;
 		}
 	}
-	int r = strlen(str_n);
+	int len_of_str_new = strlen(str_n);
 	int l = 0;
 	scanf("%d", &n);
 	for (int i = 0; i < n; i++) {
@@ -94,7 +94,7 @@ int main() {
 		m = strlen(word);
 		int w = 0;
 		int j = 0;
-		int g = check_for_d_or_D_or_Other(str_n, word, &w, &j, &r, &m);
+		int g = check_for_d_or_D_or_Other(str_n, word, &w, &j, &len_of_str_new, &m);
 		if (g == 1){
 			printf("%d ", i);
 		}
