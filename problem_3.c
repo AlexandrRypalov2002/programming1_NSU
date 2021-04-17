@@ -40,23 +40,17 @@ void heap_sort(int det_s[], int numbers[], int sizes_of_matrixes[], int number) 
 	}
 }
 
-int det_of_matrix(int M[][K], int matrix_reducted[][K], int size) {
-	int matrix_for_trash[K][K];
-	for (int i = 0; i < size; i++) {
-		for (int j = 0; j < size; j++) {
-			matrix_for_trash[i][j] = matrix_reducted[i][j];
-		}
-	}
+int det_of_matrix(int matrix[][K], int matrix_reducted[][K],  int size) {
 	if (size == 1) {
-		return M[0][0];
+		return matrix[0][0];
 	}
 	if (size == 2) {
-		return(M[0][0] * M[1][1] - M[1][0] * M[0][1]);
+		return(matrix[0][0] * matrix[1][1] - matrix[1][0] * matrix[0][1]);
 	}
 	else {
 		int final_result = 0;
 		for (int i = 0; i < size; i++) {
-			if (M[0][i] == 0) {
+			if (matrix[0][i] == 0) {
 				i++;
 			}
 			for (int j = 0; j < size - 1; j++) {
@@ -65,11 +59,11 @@ int det_of_matrix(int M[][K], int matrix_reducted[][K], int size) {
 					if (k == i) {
 						k++;
 					}
-					matrix_reducted[j][c] = M[j + 1][k];
+					matrix_reducted[j][c] = matrix[j + 1][k];
 					c++;
 				}
 			}
-			int a = M[0][i] * det_of_matrix(matrix_reducted, matrix_for_trash, size - 1);
+			int a = matrix[0][i] * det_of_matrix(matrix_reducted, matrix_reducted, size - 1);
 			final_result += pow(-1, i) * a;
 		}
 		return final_result;
@@ -77,27 +71,30 @@ int det_of_matrix(int M[][K], int matrix_reducted[][K], int size) {
 }
 
 int main() {
-	int matrixx[K][K][N] = { 0 }; //array to keep matrixes
-	int M[K][K];
-	int matrixx_reducted[K][K];
+	int matrixx_three[K][K][N] = { 0 }; //array to keep matrixes
+	int matrix[K][K];
+	int matrix_reducted[K][K] = { 0 };
 	int matrixx_sorted[K][K][N] = { 0 };
 	int numb; //number of matrixes
 	int size; //size of matrix
 	int numbers[N] = { 0 }; //numbers
 	int det_s[N] = { 0 }; //determinates of matrixes
 	int sizes_of_matrixes[N] = { 0 };
-	scanf("%d\n", &numb);
+	FILE* input, * output;
+	input = fopen("input.txt", "r");
+	fscanf(input, "%d", &numb);
 	for (int i = 0; i < numb; i++) {
-		scanf("%d\n", &size);
+		fscanf(input, "%d", &size);
 		sizes_of_matrixes[i] = size;
 		for (int j = 0; j < size; j++) {
 			for (int l = 0; l < size; l++) {
-				scanf("%d", &M[j][l]);
-				matrixx[j][l][i] = M[j][l];
+				fscanf(input, "%d", &matrix[j][l]);
+				matrixx_three[j][l][i] = matrix[j][l];
 			}
 		}
-		det_s[i] = det_of_matrix(M, matrixx_reducted, size);
+		det_s[i] = det_of_matrix(matrix, matrix_reducted, size);
 	}
+	fclose(input);
 	for (int i = 0; i < numb; i++) {
 		numbers[i] = i;
 	}
@@ -105,17 +102,19 @@ int main() {
 	for (int i = 0; i < numb; i++) {
 		for (int j = 0; j < sizes_of_matrixes[i]; j++) {
 			for (int l = 0; l < sizes_of_matrixes[i]; l++) {
-				matrixx_sorted[j][l][i] = matrixx[j][l][numbers[i]];
+				matrixx_sorted[j][l][i] = matrixx_three[j][l][numbers[i]];
 			}
 		}
 	}
+	output = fopen("output.txt", "w");
 	for (int i = 0; i < numb; i++) {
 		for (int j = 0; j < sizes_of_matrixes[i]; j++) {
 			for (int l = 0; l < sizes_of_matrixes[i]; l++) {
-				printf("%d ", matrixx_sorted[j][l][i]);
+				fprintf(output, "%d ", matrixx_sorted[j][l][i]);
 			}
-			printf("\n");
+			fprintf(output, "\n");
 		}
 	}
+	fclose(output);
 	return 0;
 }
