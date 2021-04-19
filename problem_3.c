@@ -83,7 +83,7 @@ int main() {
 	FILE* input, * output;
 	input = fopen("input.txt", "r");
 	if (input == NULL) {
-		printf("File doesn't found");
+		printf("File not found");
 		return 1;
 	}
 	fscanf(input, "%d", &numb);
@@ -112,7 +112,7 @@ int main() {
 	}
 	output = fopen("output.txt", "w");
 	if (output == NULL) {
-		printf("File doesn't found");
+		printf("File not found");
 		return 1;
 	}
 	for (int i = 0; i < numb; i++) {
