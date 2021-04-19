@@ -82,6 +82,10 @@ int main() {
 	int sizes_of_matrixes[N] = { 0 };
 	FILE* input, * output;
 	input = fopen("input.txt", "r");
+	if (input == NULL) {
+		printf("File doesn't found");
+		return 1;
+	}
 	fscanf(input, "%d", &numb);
 	for (int i = 0; i < numb; i++) {
 		fscanf(input, "%d", &size);
@@ -107,6 +111,10 @@ int main() {
 		}
 	}
 	output = fopen("output.txt", "w");
+	if (output == NULL) {
+		printf("File doesn't found");
+		return 1;
+	}
 	for (int i = 0; i < numb; i++) {
 		for (int j = 0; j < sizes_of_matrixes[i]; j++) {
 			for (int l = 0; l < sizes_of_matrixes[i]; l++) {
