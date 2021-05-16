@@ -61,27 +61,26 @@ void add_in_tree(Tree** head, char* value) {
 	}
 }
 
-Tree* search_for_min(Tree* root, int f) {
-	while (root->left != NULL) {
-		root = root->left;
-		f = 1;
-	}
-	if (f == 1) {
-		if (root->right) {
-			root->parent->left = root->right;
-			root->right->parent = root->parent;
-		}
-		else {
-			root->parent->left = root->right;
-		}
-	}
-	else {
+Tree* find_min_make_it_max(Tree* root) {
+	if(root->left == NULL) {
 		if (root->right) {
 			root->parent->right = root->right;
 			root->right->parent = root->parent;
 		}
 		else {
 			return root;
+		}
+	}
+	else {
+		while (root->left != NULL) {
+			root = root->left;
+		}
+		if (root->right) {
+			root->parent->left = root->right;
+			root->right->parent = root->parent;
+		}
+		else {
+			root->parent->left = root->right;
 		}
 	}
 	return root;
@@ -167,8 +166,12 @@ Tree* remove_from_tree(Tree* for_word, char* word) {
 			}
 		}
 		else if ((remove->right != NULL) && (remove->left != NULL)) {
-			Tree* local_min = search_for_min(remove->right, 0);
-			remove->value = local_min->value;
+			Tree* local_min = find_min_make_it_max(remove->right);
+			if (local_min == remove->right) {
+				remove->right = local_min->right;
+			}
+			strcpy(remove->value, local_min->value);
+			free(local_min->value);
 			free(local_min);
 		}
 	}
@@ -179,8 +182,8 @@ Tree* remove_from_tree(Tree* for_word, char* word) {
 }
 
 Tree* read_words_from_file(FILE* input, Tree* root, int* number_b, int* number_d) {
-	char del[M] = { 'D', 'E', 'L', 'E', 'T', 'E', ':','\0' };
-	char level[L] = { 'L', 'E', 'V', 'E', 'L', ':', '\0' };
+	char del[M] = "DELETE:";
+	char level[L] = "LEVEL:";
 	int all = 0;
 	int used = 1;
 	int used_for_tree = 0;
