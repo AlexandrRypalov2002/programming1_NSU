@@ -40,46 +40,37 @@ void heap_sort(int det_s[], int numbers[], int sizes_of_matrixes[], int number) 
 	}
 }
 
-int det_of_matrix(int matrix[][K], int matrix_reducted[][K],  int size) {
-	if (size == 1) {
-		return matrix[0][0];
-	}
-	if (size == 2) {
-		return(matrix[0][0] * matrix[1][1] - matrix[1][0] * matrix[0][1]);
-	}
-	else {
-		int final_result = 0;
-		for (int i = 0; i < size; i++) {
-			if (matrix[0][i] == 0) {
-				i++;
+int det_of_matrix(int matrix[][K], int strings[], int size, int minor_size, int s) {
+	int final_result = 0;
+	int c_minus = 0;
+	for (int i = 0; i < size; i++) {
+		if (strings[i] == 0) {
+			if (minor_size == 1) {
+				return matrix[s][i];
 			}
-			for (int j = 0; j < size - 1; j++) {
-				int c = 0;
-				for (int k = 0; k < size; k++) {
-					if (k == i) {
-						k++;
-					}
-					matrix_reducted[j][c] = matrix[j + 1][k];
-					c++;
-				}
+			else {
+				s++;
+				strings[i]++;
+				final_result += pow((-1), c_minus)*matrix[s - 1][i] * det_of_matrix(matrix, strings, size, minor_size - 1, s);
+				c_minus++;
+				strings[i]--;
+				s--;
 			}
-			int a = matrix[0][i] * det_of_matrix(matrix_reducted, matrix_reducted, size - 1);
-			final_result += pow(-1, i) * a;
 		}
-		return final_result;
 	}
+	return final_result;
 }
 
 int main() {
 	int matrixx_three[K][K][N] = { 0 }; //array to keep matrixes
 	int matrix[K][K];
-	int matrix_reducted[K][K] = { 0 };
 	int matrixx_sorted[K][K][N] = { 0 };
 	int numb; //number of matrixes
 	int size; //size of matrix
 	int numbers[N] = { 0 }; //numbers
 	int det_s[N] = { 0 }; //determinates of matrixes
 	int sizes_of_matrixes[N] = { 0 };
+	int strings[K] = { 0 };
 	FILE* input, * output;
 	input = fopen("input.txt", "r");
 	if (input == NULL) {
@@ -96,7 +87,7 @@ int main() {
 				matrixx_three[j][l][i] = matrix[j][l];
 			}
 		}
-		det_s[i] = det_of_matrix(matrix, matrix_reducted, size);
+		det_s[i] = det_of_matrix(matrix, strings, size, size, 0);
 	}
 	fclose(input);
 	for (int i = 0; i < numb; i++) {
