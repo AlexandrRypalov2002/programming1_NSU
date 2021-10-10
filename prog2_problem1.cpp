@@ -8,9 +8,16 @@ ifstream f_in("input.txt");
 ofstream f_out("output.txt");
 
 class Matrix {
-private:
 	int s;
 	int** matrix;
+
+	void memory_alloc(int size) {
+		this->matrix = new int* [size];
+		for (int i = 1; i < size; i++) {
+			this->matrix[i] = new int[size];
+		}
+	}
+
 	void delete_matrix() {
 		for (int i = 1; i < this->s; i++) {
 			delete[] this->matrix[i];
@@ -20,29 +27,17 @@ private:
 
 	void copy_matrix(const Matrix& orig) {
 		this->s = orig.s;
-		this->matrix = new int* [this->s];
-		if (this->matrix) {
-			for (int i = 1; i < this->s; i++) {
-				this->matrix[i] = new int[this->s];
-				if (this->matrix[i]) {
-					continue;
-				}
-				else {
-					f_out << "Error";
-					exit(0);
-				}
-			}
-			for (int i = 1; i < this->s; i++) {
-				for (int j = 1; j < this->s; j++) {
-					this->matrix[i][j] = orig.matrix[i][j];
-				}
+		memory_alloc(orig.s);
+		for (int i = 1; i < this->s; i++) {
+			for (int j = 1; j < this->s; j++) {
+				this->matrix[i][j] = orig.matrix[i][j];
 			}
 		}
 	}
+
 public:
-	Matrix() {				//constructor by default
-		s = 0;
-		matrix = nullptr;
+	Matrix(): s(0), matrix(nullptr) {	//constructor by default
+		
 	}
 
 	Matrix(const Matrix& orig) {
@@ -55,74 +50,49 @@ public:
 
 	Matrix(int size) {		//constructor to create matrix with 1 on main diagonal
 		this->s = size + 1;
-		matrix = new int* [s];
-		if (matrix) {
-			for (int i = 1; i < s; i++) {
-				matrix[i] = new int[s];
-				if (matrix[i]) {
-					continue;
-				}
-				else {
-					exit(0);
-				}
-			}
-			for (int i = 1; i < s; i++) {
-				for (int j = 1; j < s; j++) {
-					if (i == j) {
-						matrix[i][j] = 1;
-					}
-					else {
-						matrix[i][j] = 0;
-					}
-				}
+		memory_alloc(this->s);
+		for (int i = 1; i < s; i++) {
+			for (int j = 1; j < s; j++) {
+				matrix[i][j] = (i == j);
 			}
 		}
 	}
 
 	Matrix(int size, int* arr) {		//constructor to create matrix with array of integers on main diagonal
 		this->s = size + 1;
-		matrix = new int* [s];
-		if (matrix) {
-			for (int i = 1; i < s; i++) {
-				matrix[i] = new int[s];
-				if (matrix[i]) {
-					continue;
+		memory_alloc(this->s);
+		for (int i = 1; i < s; i++) {
+			for (int j = 1; j < s; j++) {
+				if (i == j) {
+					matrix[i][j] = arr[i - 1];
 				}
 				else {
-					exit(0);
-				}
-			}
-			for (int i = 1; i < s; i++) {
-				for (int j = 1; j < s; j++) {
-					if (i == j) {
-						matrix[i][j] = arr[i - 1];
-					}
-					else {
-						matrix[i][j] = 0;
-					}
+					matrix[i][j] = 0;
 				}
 			}
 		}
 	}
 
-	void read_f() {
-		for (int i = 1; i < this->s; i++) {
-			for (int j = 1; j < this->s; j++) {
-				f_in >> this->matrix[i][j];
+	friend istream& operator>>(istream& input, const Matrix& m) {
+		for (int i = 1; i < m.s; i++) {
+			for (int j = 1; j < m.s; j++) {
+				input >> m.matrix[i][j];
 			}
 		}
+		return input;
 	}
 
-	void write_f() {
-		for (int i = 1; i < this->s; i++) {
-			for (int j = 1; j < this->s; j++) {
-				f_out << this->matrix[i][j] << ' ';
+	friend ostream& operator <<(ostream& output, const Matrix& m) {
+		for (int i = 1; i < m.s; i++) {
+			for (int j = 1; j < m.s; j++) {
+				output << m.matrix[i][j] << " ";
 			}
-			f_out << endl;
+			output << endl;
 		}
+		return output;
 	}
 
-	Matrix operator+ (Matrix m) {
+	Matrix operator+ (const Matrix& m) {
 		if (this->s != m.s) {
 			f_out << "Can't count sum of matrixes with different sizes";
 			exit(0);
@@ -138,7 +108,7 @@ public:
 		}
 	}
 
-	Matrix operator- (Matrix m) {
+	Matrix operator- (const Matrix& m) {
 		if (this->s != m.s) {
 			f_out << "Impossible to count difference of matrixes with different sizes";
 			exit(0);
@@ -147,14 +117,14 @@ public:
 			Matrix dif(s - 1);
 			for (int i = 1; i < s; i++) {
 				for (int j = 1; j < s; j++) {
-					dif.matrix[i][j] = this->matrix[i][j] - m.matrix[i][j];
+					m.matrix[i][j] *= (-1);
 				}
 			}
-			return dif;
+			return *this + m;
 		}
 	}
 
-	Matrix operator* (Matrix m) {
+	Matrix operator* (const Matrix& m) {
 		if (this->s != m.s) {
 			f_out << "Can't multiply matrixes with different sizes";
 			exit(0);
@@ -185,7 +155,7 @@ public:
 		return tr;
 	}
 
-	bool operator==(Matrix m) {
+	bool operator==(const Matrix& m) {
 		if (this->s != m.s) {
 			f_out << "Impossiple to compare";
 			return 0;
@@ -202,18 +172,14 @@ public:
 		return 1;
 	}
 
-	bool operator!= (Matrix m) {
+	bool operator!= (const Matrix& m) {
 		if (this->s != m.s) {
 			f_out << "Impossible to compare";
 			return 1;
 		}
 		else {
-			for (int i = 1; i < s; i++) {
-				for (int j = 1; j < s; j++) {
-					if (this->matrix[i][j] == m.matrix[i][j]) {
-						return 0;
-					}
-				}
+			if (*this == m) {
+				return 0;
 			}
 		}
 		return 1;
@@ -229,27 +195,31 @@ public:
 
 	Matrix operator() (int str, int col) {	//create minor
 		Matrix minor(this->s - 2);
-		for (int i = 1; i < str; i++) {
-			for (int j = 1; j < col; j++) {
-				minor.matrix[i][j] = this->matrix[i][j];
+		int m_str = 1;
+		int m_col = 1;
+		for (int i = 1; i < this->s; i++) {
+			if (i == str) {
+				continue;
 			}
-		}
-		for (int i = str + 1; i < s; i++) {
-			for (int j = 1; j < col; j++) {
-				minor.matrix[i - 1][j] = this->matrix[i][j];
+			for (int j = 1; j < this->s; j++) {
+				if (j == col) {
+					continue;
+				}
+				minor.matrix[m_str][m_col] = this->matrix[i][j];
+				m_col++;
 			}
-		}
-		for (int i = 1; i < str; i++) {
-			for (int j = col + 1; j < s; j++) {
-				minor.matrix[i][j - 1] = this->matrix[i][j];
-			}
-		}
-		for (int i = str + 1; i < s; i++) {
-			for (int j = col + 1; j < s; j++) {
-				minor.matrix[i - 1][j - 1] = this->matrix[i][j];
-			}
+			m_str++;
+			m_col = 1;
 		}
 		return minor;
+	}
+
+	int* operator[](int str) {
+		int* res = new int[this->s - 1];
+		for (int i = 1; i < this->s; i++) {
+			res[i - 1] = this->matrix[str][i];
+		}
+		return res;
 	}
 };
 
@@ -269,11 +239,11 @@ void main() {
 		Matrix B(size);
 		Matrix C(size);
 		Matrix D(size);
-		A.read_f();
-		B.read_f();
-		C.read_f();
-		D.read_f();
-		((A + B * (&C) + K) * (&D)).write_f();
+		f_in >> A;
+		f_in >> B;
+		f_in >> C;
+		f_in >> D;
+		f_out << ((A + B * (&C) + K) * (&D));
 		f_in.close();
 		f_out.close();
 	}
