@@ -13,13 +13,13 @@ class Matrix {
 
 	void memory_alloc(int size) {
 		this->matrix = new int* [size];
-		for (int i = 1; i < size; i++) {
+		for (int i = 0; i < size; i++) {
 			this->matrix[i] = new int[size];
 		}
 	}
 
 	void delete_matrix() {
-		for (int i = 1; i < this->s; i++) {
+		for (int i = 0; i < this->s; i++) {
 			delete[] this->matrix[i];
 		}
 		delete[] this->matrix;
@@ -28,8 +28,8 @@ class Matrix {
 	void copy_matrix(const Matrix& orig) {
 		this->s = orig.s;
 		memory_alloc(orig.s);
-		for (int i = 1; i < this->s; i++) {
-			for (int j = 1; j < this->s; j++) {
+		for (int i = 0; i < this->s; i++) {
+			for (int j = 0; j < this->s; j++) {
 				this->matrix[i][j] = orig.matrix[i][j];
 			}
 		}
@@ -49,22 +49,22 @@ public:
 	}
 
 	Matrix(int size) {		//constructor to create matrix with 1 on main diagonal
-		this->s = size + 1;
+		this->s = size;
 		memory_alloc(this->s);
-		for (int i = 1; i < s; i++) {
-			for (int j = 1; j < s; j++) {
+		for (int i = 0; i < s; i++) {
+			for (int j = 0; j < s; j++) {
 				matrix[i][j] = (i == j);
 			}
 		}
 	}
 
 	Matrix(int size, int* arr) {		//constructor to create matrix with array of integers on main diagonal
-		this->s = size + 1;
+		this->s = size;
 		memory_alloc(this->s);
-		for (int i = 1; i < s; i++) {
-			for (int j = 1; j < s; j++) {
+		for (int i = 0; i < s; i++) {
+			for (int j = 0; j < s; j++) {
 				if (i == j) {
-					matrix[i][j] = arr[i - 1];
+					matrix[i][j] = arr[i];
 				}
 				else {
 					matrix[i][j] = 0;
@@ -74,8 +74,8 @@ public:
 	}
 
 	friend istream& operator>>(istream& input, const Matrix& m) {
-		for (int i = 1; i < m.s; i++) {
-			for (int j = 1; j < m.s; j++) {
+		for (int i = 0; i < m.s; i++) {
+			for (int j = 0; j < m.s; j++) {
 				input >> m.matrix[i][j];
 			}
 		}
@@ -83,8 +83,8 @@ public:
 	}
 
 	friend ostream& operator <<(ostream& output, const Matrix& m) {
-		for (int i = 1; i < m.s; i++) {
-			for (int j = 1; j < m.s; j++) {
+		for (int i = 0; i < m.s; i++) {
+			for (int j = 0; j < m.s; j++) {
 				output << m.matrix[i][j] << " ";
 			}
 			output << endl;
@@ -98,9 +98,9 @@ public:
 			exit(0);
 		}
 		else {
-			Matrix sum(s - 1);
-			for (int i = 1; i < s; i++) {
-				for (int j = 1; j < s; j++) {
+			Matrix sum(s);
+			for (int i = 0; i < s; i++) {
+				for (int j = 0; j < s; j++) {
 					sum.matrix[i][j] = this->matrix[i][j] + m.matrix[i][j];
 				}
 			}
@@ -114,9 +114,9 @@ public:
 			exit(0);
 		}
 		else {
-			Matrix dif(s - 1);
-			for (int i = 1; i < s; i++) {
-				for (int j = 1; j < s; j++) {
+			Matrix dif(s);
+			for (int i = 0; i < s; i++) {
+				for (int j = 0; j < s; j++) {
 					m.matrix[i][j] *= (-1);
 				}
 			}
@@ -130,13 +130,13 @@ public:
 			exit(0);
 		}
 		else {
-			Matrix mult(s - 1);
-			for (int i = 1; i < mult.s; i++) {
+			Matrix mult(s);
+			for (int i = 0; i < mult.s; i++) {
 				mult.matrix[i][i] = 0;
 			}
-			for (int i = 1; i < s; i++) {
-				for (int j = 1; j < s; j++) {
-					for (int k = 1; k < s; k++) {
+			for (int i = 0; i < s; i++) {
+				for (int j = 0; j < s; j++) {
+					for (int k = 0; k < s; k++) {
 						mult.matrix[i][j] += this->matrix[i][k] * m.matrix[k][j];
 					}
 				}
@@ -146,9 +146,9 @@ public:
 	}
 
 	Matrix operator& () {	//matrix transposition
-		Matrix tr(this->s - 1);
-		for (int i = 1; i < s; i++) {
-			for (int j = 1; j < s; j++) {
+		Matrix tr(this->s);
+		for (int i = 0; i < s; i++) {
+			for (int j = 0; j < s; j++) {
 				tr.matrix[i][j] = this->matrix[j][i];
 			}
 		}
@@ -161,8 +161,8 @@ public:
 			return 0;
 		}
 		else {
-			for (int i = 1; i < s; i++) {
-				for (int j = 1; j < s; j++) {
+			for (int i = 0; i < s; i++) {
+				for (int j = 0; j < s; j++) {
 					if (this->matrix[i][j] != m.matrix[i][j]) {
 						return 0;
 					}
@@ -194,14 +194,14 @@ public:
 	}
 
 	Matrix operator() (int str, int col) {	//create minor
-		Matrix minor(this->s - 2);
-		int m_str = 1;
-		int m_col = 1;
-		for (int i = 1; i < this->s; i++) {
+		Matrix minor(this->s - 1);
+		int m_str = 0;
+		int m_col = 0;
+		for (int i = 0; i < this->s; i++) {
 			if (i == str) {
 				continue;
 			}
-			for (int j = 1; j < this->s; j++) {
+			for (int j = 0; j < this->s; j++) {
 				if (j == col) {
 					continue;
 				}
@@ -209,14 +209,14 @@ public:
 				m_col++;
 			}
 			m_str++;
-			m_col = 1;
+			m_col = 0;
 		}
 		return minor;
 	}
 
 	int* operator[](int str) {
-		int* res = new int[this->s - 1];
-		for (int i = 1; i < this->s; i++) {
+		int* res = new int[this->s];
+		for (int i = 0; i < this->s; i++) {
 			res[i - 1] = this->matrix[str][i];
 		}
 		return res;
