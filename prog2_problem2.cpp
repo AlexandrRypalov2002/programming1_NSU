@@ -7,17 +7,12 @@ ofstream f_out("output.txt");
 
 class Animal {
 protected:
-	int x;
-	int y;
-	int d;
-	int k;
-	int age;
-	int speed;
-	int type;
-	int printed_age;
+	int x, y, d, k, age, speed, type, printed_age;
 
 public:
-	Animal(int x, int y, int d, int k) : x(x), y(y), d(d), k(k), age(0), speed(1), type(1), printed_age(0) {
+	bool was_eaten;
+
+	Animal(int x, int y, int d, int k) : x(x), y(y), d(d), k(k), age(0), speed(1), type(1), printed_age(0), was_eaten(false) {
 
 	}
 
@@ -36,13 +31,13 @@ public:
 			x -= speed;
 			break;
 		}
-		if (!((age+1)%k) && age) {
+		if (!((age + 1) % k) && age) {
 			d++;
 		}
 		d %= 4;
 	}
 
-	void aging(){
+	void aging() {
 		age++;
 	}
 
@@ -78,27 +73,48 @@ public:
 		if (x < 0) {
 			x += n;
 		}
-		if (x > (n-1)) {
+		if (x > (n - 1)) {
 			x %= n;
 		}
 		if (y < 0) {
 			y += m;
 		}
-		if (y >(m-1)) {
+		if (y > (m - 1)) {
 			y %= m;
 		}
 	}
 
-	virtual bool die() {
-		if (age == 10 || age == 15) {
-			return true;
-		}
-		else {
-			return false;
-		}
+	virtual bool die() = 0;
+
+	virtual bool ready_to_reproduct() = 0;
+
+	virtual void eat(Animal* to_eat) = 0;
+
+	virtual void eat_enough() = 0;
+
+	virtual Animal* reproduction() = 0;
+
+	void zero_age() {
+		age = 0;
+	}
+};
+
+class Rabbit : public Animal {
+public:
+	Rabbit(int x, int y, int d, int k) : Animal(x, y, d, k) {
+		this->speed = 1;
+		this->was_eaten = false;
 	}
 
-	virtual bool reproduct() {
+	void eat(Animal* to_eat) {
+		;
+	}
+
+	void eat_enough() {
+		;
+	}
+
+	bool ready_to_reproduct() {
 		if (age == 5 || age == 10) {
 			return true;
 		}
@@ -107,17 +123,20 @@ public:
 		}
 	}
 
-	virtual void eat() = 0;
-};
-
-class Rabbit : public Animal {
-public:
-	Rabbit(int x, int y, int d, int k) : Animal(x, y, d, k) {
-		this->speed = 1;
+	bool die() {
+		if (age == 10 || age == 15) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
-	void eat() {
-		f_out << "&";
+	Animal* reproduction() {
+		Animal* a = new Rabbit(*this);
+		a->zero_age();
+		a->was_eaten = false;
+		return a;
 	}
 
 };
@@ -133,6 +152,7 @@ public:
 		this->type = 2;
 		this->eaten = 0;
 		this->printed_age = j;
+		this->was_eaten = false;
 	}
 
 	bool die() {
@@ -144,13 +164,15 @@ public:
 		}
 	}
 
-	void eat() {
-		eaten++;
+	void eat(Animal* to_eat) {
+		if (to_eat->get_type() == 1) {
+			to_eat->was_eaten = true;
+			eaten++;
+		}
 	}
 
-	bool reproduct() {
-		if (!(eaten%2) && eaten) {
-			eaten = 0;
+	bool ready_to_reproduct() {
+		if (!(eaten % 2) && eaten) {
 			return true;
 		}
 		else {
@@ -158,8 +180,20 @@ public:
 		}
 	}
 
+	void eat_enough() {
+		eaten = 0;
+	}
+
 	int get_eaten() {
 		return eaten;
+	}
+
+	Animal* reproduction() {
+		this->eaten = 0;
+		Animal* a = new Wolf(*this);
+		a->zero_age();
+		a->was_eaten = false;
+		return a;
 	}
 };
 
@@ -251,15 +285,17 @@ public:
 		if (n == nullptr) {
 			return nullptr;
 		}
-		if (n == head) {
-			head = head->next;
+		if (n->data->was_eaten || n->data->die()) {
+			if (n == head) {
+				head = head->next;
+				delete n;
+				return head;
+			}
+			Node* prev = this->previous(n);
+			prev->next = n->next;
 			delete n;
-			return head;
+			return prev;
 		}
-		Node* prev = this->previous(n);
-		prev->next = n->next;
-		delete n;
-		return prev;
 	}
 
 };
@@ -279,7 +315,7 @@ public:
 		this->T = t;
 		this->r = r;
 		this->w = w;
-		
+
 		for (int i = 0; i < r; i++) {
 			int x, y, d, k;
 			f_in >> x >> y >> d >> k;
@@ -322,13 +358,8 @@ public:
 			return;
 		}
 		while (n != nullptr) {
-			if (zoo.get_animal(n).reproduct()) {
-				if (zoo.get_animal(n).get_type() == 1) {
-					zoo.append(new Rabbit(zoo.get_animal(n).get_x(), zoo.get_animal(n).get_y(), zoo.get_animal(n).get_d(), zoo.get_animal(n).get_k()));
-				}
-				else if (zoo.get_animal(n).get_type() == 2) {
-					zoo.append(new Wolf(zoo.get_animal(n).get_x(), zoo.get_animal(n).get_y(), zoo.get_animal(n).get_d(), zoo.get_animal(n).get_k(), zoo.get_animal(n).get_printed_age()));
-				}
+			if (zoo.get_animal(n).ready_to_reproduct()) {
+				zoo.append(zoo.get_animal(n).reproduction());
 			}
 			n = n->next;
 		}
@@ -336,29 +367,21 @@ public:
 
 	void Feed() {
 		Node* n = zoo.get_head();
-		if (n == nullptr) {
-			return;
-		}
 		while (n != nullptr) {
-			if (zoo.get_animal(n).get_type() == 1) {
-				n = n->next;
-				continue;
-			}
-			if (zoo.get_animal(n).get_type() == 2) {
-				Node* p = zoo.get_head();
-				while (p != nullptr) {
-					if (zoo.get_animal(p).get_type() == 1 && zoo.get_animal(p).get_x() == zoo.get_animal(n).get_x() && zoo.get_animal(p).get_y() == zoo.get_animal(n).get_y()) {
-						Node* h = p;
-						p = p->next;
+			Node* t = zoo.get_head();
+			while (t != nullptr) {
+				if (t != n && zoo.get_animal(n).get_x() == zoo.get_animal(t).get_x() && zoo.get_animal(n).get_y() == zoo.get_animal(t).get_y()) {
+					zoo.get_animal(n).eat(&zoo.get_animal(t));
+					if (zoo.get_animal(t).was_eaten) {
+						Node* h = t;
+						t = t->next;
 						zoo.delete_from_list(h);
-						zoo.get_animal(n).eat();
-					}
-					else {
-						p = p->next;
+						continue;
 					}
 				}
-				n = n->next;
+				t = t->next;
 			}
+			n = n->next;
 		}
 	}
 
