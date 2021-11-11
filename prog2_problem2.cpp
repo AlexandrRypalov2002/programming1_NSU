@@ -106,13 +106,9 @@ public:
 		this->was_eaten = false;
 	}
 
-	void eat(Animal* to_eat) {
-		;
-	}
+	void eat(Animal* to_eat) {}
 
-	void eat_enough() {
-		;
-	}
+	void eat_enough() {}
 
 	bool ready_to_reproduct() {
 		if (age == 5 || age == 10) {
@@ -124,12 +120,7 @@ public:
 	}
 
 	bool die() {
-		if (age == 10 || age == 15) {
-			return true;
-		}
-		else {
-			return false;
-		}
+		return age == 10;
 	}
 
 	Animal* reproduction() {
@@ -156,12 +147,7 @@ public:
 	}
 
 	bool die() {
-		if (age == 15) {
-			return true;
-		}
-		else {
-			return false;
-		}
+		return age == 15;
 	}
 
 	void eat(Animal* to_eat) {
@@ -172,12 +158,7 @@ public:
 	}
 
 	bool ready_to_reproduct() {
-		if (!(eaten % 2) && eaten) {
-			return true;
-		}
-		else {
-			return false;
-		}
+		return (!(eaten % 2) && eaten);
 	}
 
 	void eat_enough() {
@@ -301,11 +282,7 @@ public:
 };
 
 class Simulation {
-	int N;
-	int M;
-	int T;
-	int r;		//number of rabbits
-	int w;		//number of wolves
+	int N, M, T, r, w;	
 	List zoo;
 
 public:
