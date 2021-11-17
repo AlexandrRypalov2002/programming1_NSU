@@ -16,12 +16,6 @@ struct Pair {
 
 	}
 
-	Pair<K, V>& operator=(const Pair<K, V>& p) {
-		this->value = p->value;
-		this->key = p->key;
-		this->next = nullptr; 
-	}
-
 	bool operator==(const Pair<K, V>& p) {
 		return(this->key == p.key && this->value == p.value);
 	}
@@ -184,6 +178,19 @@ public:
 		return head;
 	}
 
+	Pair<K, V>* search_pair(K key) {
+		Pair<K, V>* p = head;
+		while (p->get_key() != key && p != nullptr) {
+			p = p->next;
+		}
+		if (p == nullptr) {
+			throw "Key not found";
+		}
+		else {
+			return p;
+		}
+	}
+
 	int get_len() {
 		return len;
 	}
@@ -193,16 +200,12 @@ public:
 template<typename K, typename V>
 class HashMap {
 	List<K, V>* items;
-	size_t size;
+	size_t size = 20;
 	size_t size_ne;		//number of not empty lists in items
-	size_t buffer = 20;
-	const float overflow = 0.5;
+	float overflow;
 
 	void add_to_items(List<K, V>* array, size_t s, K key, V value) {
 		size_t index = get_hash(key);
-		if (index == s) {
-			index--;
-		}
 		if (array[index].append(key, value)) {
 			size_ne++;
 		}
@@ -210,10 +213,9 @@ class HashMap {
 
 public:
 	
-	HashMap(): size_ne(0) {
-		items = new List<K, V>[buffer];
-		size = buffer;
-		buffer *= 2;
+	HashMap(float overflow): size_ne(0) {
+		items = new List<K, V>[size];
+		this->overflow = overflow;
 	}
 
 	~HashMap() {
@@ -226,9 +228,9 @@ public:
 	}
 
 	void rehash() {
-		List<K, V>* new_list = new List<K, V>[buffer];
+		List<K, V>* new_list = new List<K, V>[size * 2];
 		size_t t = size;
-		size = buffer;
+		size *= 2;
 		for (int i = 0; i < t; ++i) {
 			if (items[i].is_empty()) {
 				continue;
@@ -240,7 +242,6 @@ public:
 				items[i].remove(p->get_key());
 			}
 		}
-		buffer *= 2;
 		delete[] items;
 		items = new_list;
 	}
@@ -255,48 +256,34 @@ public:
 	void remove(K key) {
 		size_t r = get_hash(key);
 		if (!items[r].is_empty()) {
+			items[r].remove(key);
+			size_ne--;
+		}
+	}
+
+	void search(K key) {
+		size_t r = get_hash(key);
+		if (!(items[r].is_empty())) {
 			try {
-				items[r].remove(key);
-				size_ne--;
+				Pair<K, V> p = *(items[r].search_pair(key));
+				cout << p.get_key() << ' ' << p.get_value();
 			}
 			catch (char* s) {
 				cout << s;
 			}
 		}
-		
 	}
 
 	class Iterator {
 		size_t size;
 		size_t position;
-
-		void copy_iter(const Iterator& iter) {
-			item = iter.item;
-			position = iter.position;
-			size = iter.size;
-		}
-	public:
 		List<K, V>* item;
 
- 		Iterator() : item(nullptr), size(-1), position(-1) {
+	public:
 
-		}
+ 		Iterator() : item(nullptr), size(-1), position(-1) {}
 
-		Iterator(List<K, V>* item, size_t size, size_t position) : item(item), size(size), position(position) {
-
-		}
-
-		Iterator(const Iterator& iter) {
-			this->copy_iter(iter);
-		}
-
-		Iterator& operator=(const Iterator& iter) {
-			if (this == &iter) {
-				return *this;
-			}
-			this->copy_iter(iter);
-			return *this;
-		}
+		Iterator(List<K, V>* item, size_t size, size_t position) : item(item), size(size), position(position) {}
 
 		List<K, V>& operator->() {
 			if (size != -1) {
@@ -305,10 +292,7 @@ public:
 		}
 
 		bool operator !=(const Iterator& end) {
-			if (item == end.item) {
-				return false;
-			}
-			return true;
+			return(!(item == end.item));
 		}
 
 		List<K, V>& operator*() {
@@ -317,7 +301,7 @@ public:
 			}
 		}
 
-		Iterator operator++() {
+		void operator++() {
 			int i = 1;
 			while (position + i < size) {
 				if ((item + i)->is_empty()) {
@@ -325,12 +309,13 @@ public:
 					continue;
 				}
 				else {
-					*this = Iterator(item + i, size, position + i);
-					return *this;
+					this->item = item + i;
+					this->position = position + i;
+					return;
 				}
 			}
 			*this = Iterator();
-			return *this;
+			return;
 		}
 	};
 
@@ -361,7 +346,7 @@ public:
 
 template<typename K, typename V>
 void list() {
-	HashMap<K, V> list;
+	HashMap<K, V> list(0.5);
 	int n;
 	f_in >> n;
 	char to_do;
@@ -375,7 +360,10 @@ void list() {
 		}
 		else if (to_do == 'R') {
 			list.remove(key);
-		}	
+		}
+		else if (to_do == 'S') {
+			list.search(key);
+		}
 	}
 	int len = 0;
 	int unique_number = 0;
@@ -409,31 +397,45 @@ void list() {
 					}
 				}
 			}
-		}
 
-		/*if (not_exist) {
-			unique_number++;
-		}*/
-	}
-	if (unique_number < 0) {
-		unique_number = 1;
+			if (unique_number < 0) {
+				unique_number = 1;
+			}
+		}
 	}
 	f_out << len << ' ' << unique_number;
+}
+
+template<typename K>
+void check_type_of_value(char value) {
+	if (value == 'I') {
+		list<K, int>();
+	}
+	if (value == 'S') {
+		list<K, std::string>();
+	}
+	if (value == 'D') {
+		list<K, double>();
+	}
 }
 
 int main() {
 	char type_of_key;
 	char type_of_value;
 	f_in >> type_of_key >> type_of_value;
-	if (type_of_key == 'I' && type_of_value == 'I') list<int, int>();
-	else if (type_of_key == 'D' && type_of_value == 'D') list<double, double>();
-	else if (type_of_key == 'S' && type_of_value == 'S') list<std::string, std::string>();
-	else if (type_of_key == 'I' && type_of_value == 'D') list<int, double>();
-	else if (type_of_key == 'I' && type_of_value == 'S') list<int, std::string>();
-	else if (type_of_key == 'D' && type_of_value == 'S') list<double, std::string>();
-	else if (type_of_key == 'D' && type_of_value == 'I') list<double, int>();
-	else if (type_of_key == 'S' && type_of_value == 'I') list<std::string, int>();
-	else if (type_of_key == 'S' && type_of_value == 'D') list < std::string, double>();
+
+	if (type_of_key == 'I') {
+		check_type_of_value<int>(type_of_value);
+	}
+
+	if (type_of_key == 'D') {
+		check_type_of_value<double>(type_of_value);
+	}
+
+	if (type_of_key == 'S') {
+		check_type_of_value<std::string>(type_of_value);
+	}
+
 
 	f_in.close();
 	f_out.close();
