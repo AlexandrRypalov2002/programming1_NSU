@@ -174,7 +174,7 @@ public:
 		len--;
 	}
 
-	Pair<K, V>* get_pairs() {
+	Pair<K, V>* get_head() {
 		return head;
 	}
 
@@ -183,12 +183,7 @@ public:
 		while (p->get_key() != key && p != nullptr) {
 			p = p->next;
 		}
-		if (p == nullptr) {
-			throw "Key not found";
-		}
-		else {
-			return p;
-		}
+		return p;
 	}
 
 	int get_len() {
@@ -236,7 +231,7 @@ public:
 				continue;
 			}
 			for (int j = 0; j < items[i].get_len(); j++) {
-				Pair<K, V>* p = items[i].get_pairs();
+				Pair<K, V>* p = items[i].get_head();
 				size_t a = get_hash(p->get_key());
 				add_to_items(new_list, size, p->get_key(), p->get_value());
 				items[i].remove(p->get_key());
@@ -261,72 +256,70 @@ public:
 		}
 	}
 
-	void search(K key) {
-		size_t r = get_hash(key);
-		if (!(items[r].is_empty())) {
-			try {
-				Pair<K, V> p = *(items[r].search_pair(key));
-				cout << p.get_key() << ' ' << p.get_value();
-			}
-			catch (char* s) {
-				cout << s;
-			}
-		}
+	int get_size() {
+		return size;
+	}
+
+	List<K, V>& operator[] (int i) {
+		return items[i];
 	}
 
 	class Iterator {
 		size_t size;
 		size_t position;
-		List<K, V>* item;
+		HashMap<K, V>* table;
+		Pair < K, V>* pair;
 
 	public:
 
- 		Iterator() : item(nullptr), size(-1), position(-1) {}
+		Iterator(): table(nullptr), pair(nullptr), size(-1), position(-1){}
 
-		Iterator(List<K, V>* item, size_t size, size_t position) : item(item), size(size), position(position) {}
+		Iterator(HashMap<K, V>* table, Pair<K, V>* pair, size_t size, size_t position): table(table), pair(pair), size(size), position(position){}
 
-		List<K, V>& operator->() {
-			if (size != -1) {
-				return *item;
+		bool operator!= (const Iterator& end) {
+			return(!(pair == end.pair));
+		}
+
+		Iterator& operator++() {
+			if (pair->next != nullptr) {
+				pair = pair->next;
+				return *this;
 			}
-		}
-
-		bool operator !=(const Iterator& end) {
-			return(!(item == end.item));
-		}
-
-		List<K, V>& operator*() {
-			if (size != -1) {
-				return *item;
-			}
-		}
-
-		void operator++() {
-			int i = 1;
-			while (position + i < size) {
-				if ((item + i)->is_empty()) {
-					i++;
-					continue;
+			else {
+				int i = 1;
+				while (position + i <= size) {
+					if (position + i == size) {
+						*this = Iterator();
+						return *this;
+					}
+					List<K, V> l = (*table)[position + i];
+					if (l.is_empty()) {
+						i++;
+						continue;
+					}
+					else {
+						pair = (*table)[position + i].get_head();
+						this->position = position + i;
+						return *this;
+					}
 				}
-				else {
-					this->item = item + i;
-					this->position = position + i;
-					return;
-				}
 			}
-			*this = Iterator();
-			return;
+		}
+
+		Pair<K, V>* operator->() {
+			if (size != -1) {
+				return pair;
+			}
 		}
 	};
 
 	HashMap<K, V>::Iterator begin() {
-		size_t i = 0;
-		for (; i <= size; i++) {
+		for (size_t i = 0; i <= size; i++) {
 			if (i == size) {
 				return HashMap<K, V>::Iterator();
 			}
 			if (!(items[i].is_empty())) {
-				return HashMap<K, V>::Iterator(&items[i], size, i);
+				return HashMap<K, V>::Iterator(this, items[i].get_head(), size, i);
 			}
 		}
 	}
@@ -335,18 +328,18 @@ public:
 		return Iterator();
 	}
 
-	int get_size() {
-		return size;
-	}
-
-	List<K, V>& operator[] (int i) {
-		return items[i];
+	HashMap<K, V>::Iterator search(K key) {
+		for (typename HashMap<K, V>::Iterator iter = this->begin(); iter != this->end(); ++iter) {
+			if (iter->get_key() == key) {
+				return iter;
+			}
+		}
 	}
 };
 
 template<typename K, typename V>
 void list() {
-	HashMap<K, V> list(0.5);
+	HashMap<K, V> map(0.5);
 	int n;
 	f_in >> n;
 	char to_do;
@@ -356,44 +349,39 @@ void list() {
 		if (to_do == 'A') {
 			V value;
 			f_in >> value;
-			list.add(key, value);
+			map.add(key, value);
 		}
 		else if (to_do == 'R') {
-			list.remove(key);
-		}
-		else if (to_do == 'S') {
-			list.search(key);
+			map.remove(key);
 		}
 	}
 	int len = 0;
 	int unique_number = 0;
 	int recent = 0;
-	for (int i = 0; i < list.get_size(); i++) {
-		if (list[i].is_empty()) {
+	for (int i = 0; i < map.get_size(); i++) {
+		if (map[i].is_empty()) {
 			continue;
 		}
 
-		len += list[i].get_len();
-		unique_number += list[i].get_len();
-		bool not_exist = true;
-		for (int a = 0; a < list[i].get_len(); a++) {
-			for (int b = a + 1; b < list[i].get_len(); b++) {
-				if (list[i][a] == list[i][b]) {
+		len += map[i].get_len();
+		unique_number += map[i].get_len();
+		for (int a = 0; a < map[i].get_len(); a++) {
+			for (int b = a + 1; b < map[i].get_len(); b++) {
+				if (map[i][a] == map[i][b]) {
 					unique_number--;
 				}
 			}
 		}
 
-		for (int j = i+1; j < list.get_size(); j++) {
-			if (list[j].is_empty()) {
+		for (int j = i+1; j < map.get_size(); j++) {
+			if (map[j].is_empty()) {
 				continue;
 			}
 
-			for (int a = 0; a < list[i].get_len(); a++) {
-				for (int b = 0; b < list[j].get_len(); b++) {
-					if (list[i][a] == list[j][b]) {
+			for (int a = 0; a < map[i].get_len(); a++) {
+				for (int b = 0; b < map[j].get_len(); b++) {
+					if (map[i][a] == map[j][b]) {
 						unique_number--;
-						not_exist = false;
 					}
 				}
 			}
@@ -403,7 +391,10 @@ void list() {
 			}
 		}
 	}
-	f_out << len << ' ' << unique_number;
+	f_out << len << ' ' << unique_number << endl;
+	for (typename HashMap<K, V>::Iterator iter = map.begin(); iter != map.end(); ++iter) {
+		f_out << iter->get_key() << ' ' << iter->get_value() << endl;
+	}
 }
 
 template<typename K>
@@ -435,7 +426,6 @@ int main() {
 	if (type_of_key == 'S') {
 		check_type_of_value<std::string>(type_of_value);
 	}
-
 
 	f_in.close();
 	f_out.close();
