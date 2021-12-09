@@ -9,23 +9,11 @@ using namespace std;
 ifstream f_in("input.txt");
 ofstream f_out("output.txt");
 
-struct Word {
+struct Table {
 	vector<vector<string>> symb_table;
 	int size;
 
-	void copy_word(const Word& word) {
-		size = word.size;
-		symb_table.resize(size);
-		
-		for (int i = 0; i < size; i++) {
-			symb_table[i].resize(size);
-			for (int j = 0; j < size; j++) {
-				symb_table[i][j] = word.symb_table[i][j];
-			}
-		}
-	}
-
-	Word(int s, int t, vector<vector <int>>& from_to, string& symbols) {
+	Table(int s, int t, vector<vector <int>>& from_to, string& symbols) {
 		size = s;
 		symb_table.resize(size);
 
@@ -38,78 +26,37 @@ struct Word {
 		}
 	}
 
-	Word(): size(-1) {}
-
-	Word(const Word& word) {
-		this->copy_word(word);
-	}
-
-	Word& operator= (const Word& word) {
-		if (this != &word) {
-			this->copy_word(word);
-		}
-
-		return *this;
-	}
+	Table(): size(-1) {}
 };
 
 class Automaton {
-	int size, start, start_keep;
+	int size;
+	int start;
 	set<int> end_states;
-	Word w;
-
-	void copy_automaton(const Automaton& a) {
-		size = a.size;
-		start = a.start;
-		start_keep = a.start_keep;
-		end_states = a.end_states;
-		w = Word(a.w);
-	}
+	Table table;
 
 public:
 
-	Automaton(int s, int st, int t, set<int>& end_states, vector<vector<int>>& from_to, string& symbols) {
-		size = s;
-		start = st;
-		start_keep = st;
-		w = Word(s, t, from_to, symbols);
-		this->end_states = end_states;
-	}
-
-	Automaton(const Automaton& a) {
-		this->copy_automaton(a);
-	}
-
-	Automaton& operator= (const Automaton& a) {
-		if (this != &a) {
-			this->copy_automaton(a);
-		}
-
-		return *this;
-	}
+	Automaton(int s, int st, int t, set<int>& end_states, vector<vector<int>>& from_to, string& symbols): size(s), start(st), table(Table(s, t, from_to, symbols)), end_states(end_states) {}
 
 	bool check_end(int state) {
-		for (const auto& i : this->end_states) {
-			if (state == i) {
-				return true;
-			}
-		}
-		return false;
+		return (end_states.find(state) != end_states.end());
 	}
 
-	void check_expression(string& expression) {
+	bool check_expression(string& expression) {
 		size_t count = 0;
 		size_t len = expression.length();
 		size_t expr_count = 0;
+		int go = start;
 
 		while (count < len) {
 			for (int i = 0; i < size; i++) {
-				size_t l = (w.symb_table.at(start)).at(i).length();
+				size_t l = (table.symb_table.at(go)).at(i).length();
 
 				if (l > 1) {
 					for (int j = 0; j < l; j++) {
-						if (expression.at(expr_count) == (w.symb_table.at(start).at(i)).at(j)) {
-							start = i;
+						if (expression.at(expr_count) == (table.symb_table.at(go).at(i)).at(j)) {
+							go = i;
 							expr_count++;
 							break;
 						}
@@ -120,8 +67,8 @@ public:
 					}
 				}
 
-				if (string(1, expression.at(expr_count)) == w.symb_table.at(start).at(i)) {
-					start = i;
+				if (string(1, expression.at(expr_count)) == table.symb_table.at(go).at(i)) {
+					go = i;
 					expr_count++;
 					break;
 				}
@@ -134,21 +81,17 @@ public:
 			count++; 
 		}
 
-		if (check_end(start)) {
-			f_out << "YES\n";
-			start = start_keep;
-			return;
+		if (check_end(go)) {
+			return true;
 		}
-		f_out << "NO\n";
-		start = start_keep;
-		return;
+		return false;
 	}
 
 	Automaton& determinate() {
 		set<char> alphabet;
-		for (int i = 0; i < w.size; i++) {
-			for (int j = 0; j < w.size; j++) {
-				for (const auto& l : w.symb_table.at(i).at(j)) {
+		for (int i = 0; i < table.size; i++) {
+			for (int j = 0; j < table.size; j++) {
+				for (const auto& l : table.symb_table.at(i).at(j)) {
 					alphabet.insert(l);
 				}
 			}
@@ -170,8 +113,8 @@ public:
 			for (const auto& i : alphabet) {
 				set<int> symb_current;		//set of states for one symbol from alphabet
 				for (const auto& j : current) {
-					for (int l = 0; l < w.size; l++) {
-						for (const auto& g : w.symb_table[j][l]) {
+					for (int l = 0; l < table.size; l++) {
+						for (const auto& g : table.symb_table[j][l]) {
 							if (g == i) {
 								symb_current.insert(l);
 							}
@@ -263,6 +206,48 @@ public:
 		return *this;
 	}
 
+	bool is_NFA(string& symbols) {
+		set<string> alphabet;
+		for (const auto& i : symbols) {
+			alphabet.insert(string(1, i));
+		}
+
+		for (const auto& i : alphabet) {
+			int count_column = 0;
+
+			while (count_column < size) {
+				int symb_count = 0;
+
+				for (int j = 0; j < size; j++) {
+					size_t l = table.symb_table[count_column][j].length();
+
+					if (l > 1) {
+						for (int s = 0; s < l; s++) {
+							if (i == string(1, table.symb_table[count_column][j][s])){
+								symb_count++;
+								if (symb_count > 1) {
+									return true;
+								}
+								break;
+							}
+						}
+					}
+					
+					if (i == table.symb_table[count_column][j]) {
+						symb_count++;
+						if (symb_count > 1) {
+							return true;
+						}
+					}
+				}
+
+				count_column++;
+			}
+		}
+
+		return false;
+	}
+
 };
 
 int main() {
@@ -292,12 +277,23 @@ int main() {
 
 	f_in >> T;
 	string expression;
+	bool read_by_automaton;
 	Automaton A(N, start_state, transitions, end_states, from_to, symbols);
-	A.determinate();
+
+	if (A.is_NFA(symbols)) {
+		A.determinate();
+	}
 
 	for (int i = 0; i < T; i++) {
 		f_in >> expression;
-		A.check_expression(expression);
+		read_by_automaton = A.check_expression(expression);
+		
+		if (read_by_automaton) {
+			f_out << "YES\n";
+		}
+		else {
+			f_out << "NO\n";
+		}
 	}
 
 	f_in.close();
