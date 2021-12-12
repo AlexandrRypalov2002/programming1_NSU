@@ -34,16 +34,25 @@ class Automaton {
 	int start;
 	set<int> end_states;
 	Table table;
+	bool is_DFA;
 
 public:
 
-	Automaton(int s, int st, int t, set<int>& end_states, vector<vector<int>>& from_to, string& symbols): size(s), start(st), table(Table(s, t, from_to, symbols)), end_states(end_states) {}
+	Automaton(int s, const int st, int t, set<int>& end_states, vector<vector<int>>& from_to, string& symbols, bool check_DFA): size(s), start(st), table(Table(s, t, from_to, symbols)), end_states(end_states), is_DFA(check_DFA) {}
 
 	bool check_end(int state) {
 		return (end_states.find(state) != end_states.end());
 	}
 
 	bool check_expression(string& expression) {
+		if (is_DFA == false) {
+			this->is_NFA(expression);
+
+			if (is_DFA == false) {
+				this->determinate();
+			}
+		}
+		
 		size_t count = 0;
 		size_t len = expression.length();
 		size_t expr_count = 0;
@@ -53,7 +62,7 @@ public:
 			for (int i = 0; i < size; i++) {
 				size_t l = (table.symb_table.at(go)).at(i).length();
 
-				if (l > 1) {
+				if (l >= 1) {
 					for (int j = 0; j < l; j++) {
 						if (expression.at(expr_count) == (table.symb_table.at(go).at(i)).at(j)) {
 							go = i;
@@ -66,25 +75,17 @@ public:
 						break;
 					}
 				}
-
-				if (string(1, expression.at(expr_count)) == table.symb_table.at(go).at(i)) {
-					go = i;
-					expr_count++;
-					break;
-				}
+				
 			}
 
 			if (expr_count >= len) {
 				break;
 			}
 
-			count++; 
+			count++;
 		}
 
-		if (check_end(go)) {
-			return true;
-		}
-		return false;
+		return check_end(go);
 	}
 
 	Automaton& determinate() {
@@ -202,7 +203,7 @@ public:
 			new_from_to.push_back(vector<int>{*j0, * j1});
 		}
 
-		*this = Automaton(new_size, new_start, new_transitions_len, new_end_states, new_from_to, new_symbols);
+		*this = Automaton(new_size, new_start, new_transitions_len, new_end_states, new_from_to, new_symbols, true);
 		return *this;
 	}
 
@@ -221,7 +222,7 @@ public:
 				for (int j = 0; j < size; j++) {
 					size_t l = table.symb_table[count_column][j].length();
 
-					if (l > 1) {
+					if (l >= 1) {
 						for (int s = 0; s < l; s++) {
 							if (i == string(1, table.symb_table[count_column][j][s])){
 								symb_count++;
@@ -232,19 +233,13 @@ public:
 							}
 						}
 					}
-					
-					if (i == table.symb_table[count_column][j]) {
-						symb_count++;
-						if (symb_count > 1) {
-							return true;
-						}
-					}
 				}
 
 				count_column++;
 			}
 		}
 
+		is_DFA = true;
 		return false;
 	}
 
@@ -278,11 +273,7 @@ int main() {
 	f_in >> T;
 	string expression;
 	bool read_by_automaton;
-	Automaton A(N, start_state, transitions, end_states, from_to, symbols);
-
-	if (A.is_NFA(symbols)) {
-		A.determinate();
-	}
+	Automaton A(N, start_state, transitions, end_states, from_to, symbols, false);
 
 	for (int i = 0; i < T; i++) {
 		f_in >> expression;
