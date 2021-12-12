@@ -60,11 +60,11 @@ public:
 
 		while (count < len) {
 			for (int i = 0; i < size; i++) {
-				size_t l = (table.symb_table.at(go)).at(i).length();
+				size_t l = table.symb_table[go][i].length();
 
 				if (l >= 1) {
 					for (int j = 0; j < l; j++) {
-						if (expression.at(expr_count) == (table.symb_table.at(go).at(i)).at(j)) {
+						if (expression.at(expr_count) == (table.symb_table[go][i][j])) {
 							go = i;
 							expr_count++;
 							break;
@@ -92,7 +92,7 @@ public:
 		set<char> alphabet;
 		for (int i = 0; i < table.size; i++) {
 			for (int j = 0; j < table.size; j++) {
-				for (const auto& l : table.symb_table.at(i).at(j)) {
+				for (const auto& l : table.symb_table[i][j]) {
 					alphabet.insert(l);
 				}
 			}
