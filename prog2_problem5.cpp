@@ -30,7 +30,7 @@ class Crawler
 	vector<thread> threads;
 	atomic<size_t> workers_number;
 	mutex locker;
-	queue<string> q;
+	queue<string> URLs_queue;
 	set<string> visited;
 	long time;
 
@@ -53,20 +53,24 @@ public:
 	}
 
 	string get_file() {
-		locker.lock();
+		lock_guard<mutex> lock(locker);
 		string result = "";
-		if (!q.empty())
+		if (!URLs_queue.empty())
 		{
-			result = q.front();
-			q.pop();
+			result = URLs_queue.front();
+			URLs_queue.pop();
 		}
-		locker.unlock();
 		return result;
 	}
 
 	void find_references(const string& file_name) {
-		if (visited.find(file_name) != visited.end())
+		locker.lock();
+		if (visited.find(file_name) != visited.end()) {
+			locker.unlock();
 			return;
+		}
+		locker.unlock();
+
 		string to_search;
 		vector<string> references;
 		
@@ -84,35 +88,39 @@ public:
 			i = c_ref_end + 1;
 		}
 		
+
+		lock_guard<mutex> lock(locker);
 		for (const auto& i : references)
 		{
-			locker.lock();
 			if (visited.find(i) == visited.end())
-				q.push(i);
-			locker.unlock();
+				URLs_queue.push(i);
 		}
-		
-		locker.lock();
 		visited.insert(file_name);
-		locker.unlock();
 	}
 
 	void work() {
-		while (!q.empty() || workers_number)
-		{
-			string current = get_file();
-			if (!current.empty())
-			{
-				++workers_number;
-				find_references(current);
-				--workers_number;
+		while (true) {
+			locker.lock();
+			if (!URLs_queue.empty() || workers_number) {
+				locker.unlock();
+				string current = get_file();
+				if (!current.empty())
+				{
+					++workers_number;
+					find_references(current);
+					--workers_number;
+				}
+			}
+			else {
+				locker.unlock();
+				return;
 			}
 		}
 	}
 
 	void start(const string& start_url) {
 		clock_t start = clock();
-		q.push(start_url);
+		URLs_queue.push(start_url);
 		for (size_t i = 0; i < thread_count; i++)
 			threads.push_back(std::thread(&Crawler::work, this));
 		for (auto& i : threads)
@@ -134,13 +142,14 @@ int main() {
 	string input_filename;
 	int thread_count;
 	f_in >> input_filename >> thread_count;
-	for (size_t i = 0; i < max_threads; i++)
-	{
-		Crawler virus(i + 1);
-		virus.start(input_filename);
-		if (i + 1 == thread_count)
-			f_out << virus.get_visited_count() << ' ' << virus.get_time();
-	}
+	
+	Crawler spiders(max_threads);
+	spiders.start(input_filename);
+	f_out << spiders.get_time() << " " << spiders.get_visited_count() << "\n";
+
+	Crawler be_quiet_and_drive(thread_count);		//far!
+	be_quiet_and_drive.start(input_filename);
+	f_out << be_quiet_and_drive.get_time() << " " << be_quiet_and_drive.get_visited_count();
 
 	f_in.close();
 	f_out.close();
